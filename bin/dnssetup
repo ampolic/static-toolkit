@@ -6,7 +6,7 @@ if [ -z ${1+x} ]; then
 fi
 
 SITE=$1
-VULTR_API_KEY=EM6QMH66LW6ORANG6BZ6BJTDJD772GOICU2A
+VULTR_API_KEY=$(cut -d ' ' -f 3 /root/.vultr)
 
 for pubkey in /etc/ssh/ssh_host_*_key.pub /etc/ssh_host_*_key.pub
 do
