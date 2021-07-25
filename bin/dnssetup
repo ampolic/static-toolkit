@@ -1,4 +1,6 @@
-#!/bin/sh
+#!/bin/bash
+
+. /opt/ampolic/identity
 
 if [ -z ${1+x} ]; then
         echo -n "Please include a domain.\nUsage: newdns.sh [DOMAIN]\n" 1>&2
@@ -34,13 +36,12 @@ do
     ;;
   esac
 done
-echo $DSA1
 
 generate_create_post_data() {
   cat <<EOF
 {
 	"domain": "$SITE",
-	"ip": "45.76.17.134",
+	"ip": "$IPV4",
 	"dns_sec": "enabled"
 }
 EOF
@@ -51,7 +52,7 @@ generate_AAAA_post_data() {
 {
 	"name": "",
 	"type": "AAAA",
-	"data": "2001:19f0:5:3e98:5400:03ff:fe79:b790",
+	"data": "$IPV6",
 	"ttl": 300,
 	"priority": 0
 }
@@ -63,7 +64,7 @@ generate_CAA1_post_data() {
 {
         "name": "",
         "type": "CAA",
-        "data": "0 issue \"letsencrypt.org\"",
+        "data": "0 issue \"$CERT_AUTHORITY\"",
         "ttl": 300,
         "priority": 0
 }
@@ -75,7 +76,7 @@ generate_CAA2_post_data() {
 {
         "name": "",
         "type": "CAA",
-        "data": "0 iodef \"mailto:caa@ampolic.com\"",
+        "data": "0 iodef \"mailto:$CONTACT_EMAIL\"",
         "ttl": 300,
         "priority": 0
 }

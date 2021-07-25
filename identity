@@ -1,0 +1,11 @@
+CONTACT_EMAIL=contact@ampolic.com
+IPV4=140.82.3.226
+IPV6=2001:19f0:5:3e98:5400:3ff:fe79:b790
+CERT_AUTHORITY=letsencrypt.org
+TTL=400
+
+COUNTRY=US
+STATE=Ohio
+LOCAL=Toledo
+COMPANY_NAME="Ampolic Digital Solutions LLC"
+COMPANY_UNIT="Ampolic Digital Solutions LLC"
