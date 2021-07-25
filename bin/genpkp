@@ -1,0 +1,5 @@
+echo -n "Enter domain please: "
+read SITE
+openssl req -pubkey < /opt/ampolic/ssl/$SITE/$SITE.first.csr | openssl pkey -pubin -outform der | openssl dgst -sha256 -binary | base64
+openssl req -pubkey < /opt/ampolic/ssl/$SITE/$SITE.second.csr | openssl pkey -pubin -outform der | openssl dgst -sha256 -binary | base64
+openssl req -pubkey < /opt/ampolic/ssl/$SITE/$SITE.third.csr | openssl pkey -pubin -outform der | openssl dgst -sha256 -binary | base64

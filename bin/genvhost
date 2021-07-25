@@ -1,0 +1,83 @@
+#!/bin/sh
+if [ -z ${1+x} ]; then
+	echo "Please include a domain.\nUsage: genvhost [DOMAIN]" 1>&2
+	exit 1
+fi
+
+SITE=$1
+
+if [ -f "/opt/ampolic/nginx/sites/$SITE" ]; then
+    echo "$SITE Nginx virtual host already exists at /opt/ampolic/nginx/sites/$SITE."
+    exit 1
+fi
+
+echo -n "Validating domain..."
+
+echo -n "\
+#HTTPS Server
+server {
+
+	server_name $SITE;
+
+	#Listen
+	listen 443 ssl;
+	listen [::]:443 ssl;
+
+	#Files
+	root /var/www/html/$SITE;
+	index index.html;
+
+	#HTTP Headers
+	more_set_headers 'Server: Ampolic Digital Solutions LLC' always;
+	add_header Strict-Transport-Security            \"max-age=31536000; includeSubDomains; preload\" always;
+	add_header Public-Key-Pins                      'pin-sha256=\"\"; pin-sha256=\"\"; pin-sha256=\"\"; max-age=30; includeSubDomains' always;
+	add_header Referrer-Policy                      \"no-referrer\"                                  always;
+	add_header X-Content-Type-Options               \"nosniff\"                                      always;
+	add_header X-Download-Options                   \"noopen\"                                       always;
+	add_header X-Frame-Options                      \"SAMEORIGIN\"                                   always;
+	add_header X-Permitted-Cross-Domain-Policies    \"none\"                                         always;
+	add_header X-Robots-Tag                         \"noindex\"                                      always;
+	add_header X-XSS-Protection                     \"0\"                                            always;
+	add_header Permissions-Policy                   \"accelerometer=('none'), ambient-light-sensor=('none'), autoplay=('none'), battery=('none'), camera=('none'), display-capture=('none'), fullscreen=('none'), geolocation=('none'), gyroscope=('none'), magnetometer=('none')\";
+	add_header Content-Security-Policy              \"default-src 'none'; img-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; script-src 'strict-dynamic' 'sha256-47w0dPAohbnIxI8+zC2f4swOjlP9ejjXrqymC7nhRfs='; upgrade-insecure-requests\" always;
+	add_header Cross-Origin-Embedder-Policy         \"require-corp\"                                 always;
+	add_header Cross-Origin-Opener-Policy           \"same-origin\"                                  always;
+	add_header Cross-Origin-Resource-Policy         \"same-origin\"                                  always;
+	add_header Expect-CT                            \"enforce, max-age=30\"                          always;
+
+	#Ban Bad Requests (TRACE, DELETE, PUT, OPTIONS, UNKNOWN)
+	include /opt/ampolic/nginx/snippets/badrequests.conf;
+
+	#Don't log favicon access (bots)
+	location = /favicon.ico { log_not_found off; access_log off; }
+
+	#Don't log robots.txt access (bots)
+	location = /robots.txt { log_not_found off; access_log off; allow all; }
+
+	#Cache Assets, Stylesheets, and Scripts
+	location ~* \.(css|gif|ico|jpeg|jpg|js|png)$ { expires max; }
+
+	#SSL Settings
+	ssl_stapling on;
+	ssl_stapling_verify on;
+	ssl_session_cache shared:SSL:10m;
+	ssl_session_timeout 10m;
+	ssl_protocols TLSv1.2 TLSv1.3;
+	ssl_prefer_server_ciphers on;
+	ssl_ecdh_curve secp384r1;
+	ssl_ciphers AES256+EECDH:AES256+EDH:!aNULL:!AES128;
+	ssl_certificate /etc/letsencrypt/live/$SITE/fullchain.pem;
+	ssl_certificate_key /etc/letsencrypt/live/$SITE/privkey.pem;
+}
+
+#HTTP Redirect Server
+server {
+	listen 80;
+	listen [::]:80;
+	server_name $SITE;
+	include badrequests.conf;
+	return 301 https://\$server_name\$request_uri;
+}
+" > /opt/ampolic/nginx/sites/$SITE
+mkdir -p /opt/ampolic/www/$SITE
+echo "Nginx configuration for $SITE generated successfully and the webroot has been created at /var/www/html/$SITE"

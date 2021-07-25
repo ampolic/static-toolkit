@@ -1,0 +1,27 @@
+#!/bin/bash
+
+if [ -z ${1+x} ]; then
+     echo "Please include a domain.\nUsage: genvirtualhost.sh [DOMAIN]" 1>&2
+     exit 1
+fi
+
+SITE=$1
+
+mkdir -p /opt/ampolic/ssl/$SITE
+
+echo "\
+domains = *.$SITE, $SITE\n\
+\n\
+csr = /opt/ampolic/ssl/$SITE/$SITE.first.csr\n\
+cert-path = /opt/ampolic/ssl/$SITE/cert.pem\n\
+fullchain-path = /opt/ampolic/ssl/$SITE/fullchain.pem\n\
+chain-path = /opt/ampolic/ssl/$SITE/chain.pem\n\
+\n\
+rsa-key-size = 4096\n\
+\n\
+email = contact@ampolic.com\n\
+text = True\n\
+authenticator = certbot-dns-vultr:dns-vultr\n\
+renew-by-default = true\n\
+agree-tos = true\
+" > /opt/ampolic/ssl/$SITE/$SITE.certbot.conf

@@ -1,0 +1,44 @@
+#!/bin/sh
+
+if [ -z ${1+x} ]; then
+     printf "Please include a domain.\nUsage: newsite.sh [DOMAIN]\n" 1>&2
+     exit 1
+fi
+
+SITE=$1
+
+echo "Creating Directory..."
+mkdir -p /opt/ampolic/ssl/"$SITE"
+
+echo "Creating OpenSSL Configuration file..."
+echo "[req]\n\
+distinguished_name = req_distinguished_name\n\
+req_extensions = req_ext\n\
+prompt = no\n\
+[req_distinguished_name]\n\
+C   = US\n\
+ST  = Ohio\n\
+L   = Toledo\n\
+O   = Ampolic Digital Solutions LLC\n\
+OU  = Ampolic Digital Solutions LLC\n\
+CN  = $SITE\n\
+[req_ext]\n\
+subjectAltName = @alt_names\n\
+[alt_names]\n\
+DNS.1 = *.$SITE\n\
+DNS.2 = $SITE\n\
+" > /opt/ampolic/ssl/$SITE/$SITE.openssl.conf
+
+echo "Generating Private Key 1..."
+openssl genrsa -out /opt/ampolic/ssl/$SITE/$SITE.first.key 4096 > /dev/null 2>&1
+echo "Generating Private Key 2..."
+openssl genrsa -out /opt/ampolic/ssl/$SITE/$SITE.second.key 4096 > /dev/null 2>&1
+echo "Generating Private Key 3..."
+openssl genrsa -out /opt/ampolic/ssl/$SITE/$SITE.third.key 4096 > /dev/null 2>&1
+echo "Generating Certificate Signing Request 1..."
+openssl req -new -key /opt/ampolic/ssl/$SITE/$SITE.first.key -sha256 -out /opt/ampolic/ssl/$SITE/$SITE.first.csr -config /opt/ampolic/ssl/$SITE/openssl.cnf > /dev/null 2>&1
+echo "Generating Certificate Signing Request 2..."
+openssl req -new -key /opt/ampolic/ssl/$SITE/$SITE.second.key -sha256 -out /opt/ampolic/ssl/$SITE/$SITE.second.csr -config /opt/ampolic/ssl/$SITE/openssl.cnf > /dev/null 2>&1
+echo "Generating Certificate Signing Request 3..."
+openssl req -new -key /opt/ampolic/ssl/$SITE/$SITE.third.key -sha256 -out /opt/ampolic/ssl/$SITE/$SITE.third.csr -config /opt/ampolic/ssl/$SITE/openssl.cnf > /dev/null 2>&1
+echo "Successfully generated 3 private keys in /opt/ampolic/ssl/$SITE/ and generated 3 signed certificate requests for $SITE and *.$SITE."

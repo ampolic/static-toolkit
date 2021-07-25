@@ -1,0 +1,321 @@
+#!/bin/sh
+
+if [ -z ${1+x} ]; then
+        echo -n "Please include a domain.\nUsage: newdns.sh [DOMAIN]\n" 1>&2
+        exit 1
+fi
+
+SITE=$1
+VULTR_API_KEY=EM6QMH66LW6ORANG6BZ6BJTDJD772GOICU2A
+
+for pubkey in /etc/ssh/ssh_host_*_key.pub /etc/ssh_host_*_key.pub
+do
+  case "$(cut -d _ -f3 <<< "$pubkey")"
+  in
+    rsa)
+      RSA1="1 1 $(cut -f2 -d ' ' "$pubkey" | base64 --decode | sha1sum  | cut -f 1 -d ' ')"
+      RSA2="1 2 $(cut -f2 -d ' ' "$pubkey" | base64 --decode | sha256sum  | cut -f 1 -d ' ')"
+    ;;
+    dsa)
+      DSA1="2 1 $(cut -f2 -d ' ' "$pubkey" | base64 --decode | sha1sum  | cut -f 1 -d ' ')"
+      DSA2="2 2 $(cut -f2 -d ' ' "$pubkey" | base64 --decode | sha256sum  | cut -f 1 -d ' ')"
+    ;;
+    ecdsa)
+      ECDSA1="3 1 $(cut -f2 -d ' ' "$pubkey" | base64 --decode | sha1sum  | cut -f 1 -d ' ')"
+      ECDSA2="3 2 $(cut -f2 -d ' ' "$pubkey" | base64 --decode | sha256sum  | cut -f 1 -d ' ')"
+    ;;
+    ed25519)
+      ED255191="4 1 $(cut -f2 -d ' ' "$pubkey" | base64 --decode | sha1sum  | cut -f 1 -d ' ')"
+      ED255192="4 2 $(cut -f2 -d ' ' "$pubkey" | base64 --decode | sha256sum  | cut -f 1 -d ' ')"
+    ;;
+    ed448)
+      ED4481="6 1 $(cut -f2 -d ' ' "$pubkey" | base64 --decode | sha1sum  | cut -f 1 -d ' ')"
+      ED4482="6 2 $(cut -f2 -d ' ' "$pubkey" | base64 --decode | sha256sum  | cut -f 1 -d ' ')"
+    ;;
+  esac
+done
+echo $DSA1
+
+generate_create_post_data() {
+  cat <<EOF
+{
+	"domain": "$SITE",
+	"ip": "45.76.17.134",
+	"dns_sec": "enabled"
+}
+EOF
+}
+
+generate_AAAA_post_data() {
+  cat <<EOF
+{
+	"name": "",
+	"type": "AAAA",
+	"data": "2001:19f0:5:3e98:5400:03ff:fe79:b790",
+	"ttl": 300,
+	"priority": 0
+}
+EOF
+}
+
+generate_CAA1_post_data() {
+  cat <<EOF
+{
+        "name": "",
+        "type": "CAA",
+        "data": "0 issue \"letsencrypt.org\"",
+        "ttl": 300,
+        "priority": 0
+}
+EOF
+}
+
+generate_CAA2_post_data() {
+  cat <<EOF
+{
+        "name": "",
+        "type": "CAA",
+        "data": "0 iodef \"mailto:caa@ampolic.com\"",
+        "ttl": 300,
+        "priority": 0
+}
+EOF
+}
+
+generate_SSHFP1_post_data() {
+  cat <<EOF
+{
+	"name": "",
+	"type": "SSHFP",
+	"data": "$RSA1",
+	"ttl": 300,
+	"priority": 0
+}
+EOF
+}
+
+generate_SSHFP2_post_data() {
+  cat <<EOF
+{
+        "name": "",
+        "type": "SSHFP",
+        "data": "$RSA2",
+        "ttl": 300,
+        "priority": 0
+}
+EOF
+}
+
+generate_SSHFP3_post_data() {
+  cat <<EOF
+{
+        "name": "",
+        "type": "SSHFP",
+        "data": "$DSA1",
+        "ttl": 300,
+        "priority": 0
+}
+EOF
+}
+
+generate_SSHFP4_post_data() {
+  cat <<EOF
+{
+        "name": "",
+        "type": "SSHFP",
+        "data": "$DSA2",
+        "ttl": 300,
+        "priority": 0
+}
+EOF
+}
+
+generate_SSHFP5_post_data() {
+  cat <<EOF
+{
+        "name": "",
+        "type": "SSHFP",
+        "data": "$ECDSA1",
+        "ttl": 300,
+        "priority": 0
+}
+EOF
+}
+
+generate_SSHFP6_post_data() {
+  cat <<EOF
+{
+        "name": "",
+        "type": "SSHFP",
+        "data": "$ECDSA2",
+        "ttl": 300,
+        "priority": 0
+}
+EOF
+}
+
+generate_SSHFP7_post_data() {
+  cat <<EOF
+{
+        "name": "",
+        "type": "SSHFP",
+        "data": "$ED255191",
+        "ttl": 300,
+        "priority": 0
+}
+EOF
+}
+
+generate_SSHFP8_post_data() {
+  cat <<EOF
+{
+        "name": "",
+        "type": "SSHFP",
+        "data": "$ED255192",
+        "ttl": 300,
+        "priority": 0
+}
+EOF
+}
+
+generate_SSHFP9_post_data() {
+  cat <<EOF
+{
+        "name": "",
+        "type": "SSHFP",
+        "data": "$ED255192",
+        "ttl": 300,
+        "priority": 0
+}
+EOF
+}
+
+generate_SSHFP10_post_data() {
+  cat <<EOF
+{
+        "name": "",
+        "type": "SSHFP",
+        "data": "$ED4481",
+        "ttl": 300,
+        "priority": 0
+}
+EOF
+}
+
+echo "Creating domain $SITE"
+curl --silent --output /dev/null "https://api.vultr.com/v2/domains" \
+  -X POST \
+  -H "Authorization: Bearer $VULTR_API_KEY" \
+  -H "Content-Type: application/json" \
+  --data "$(generate_create_post_data)"
+
+echo "Adding AAAA record"
+curl --silent --output /dev/null "https://api.vultr.com/v2/domains/$SITE/records" \
+  -X POST \
+  -H "Authorization: Bearer $VULTR_API_KEY" \
+  -H "Content-Type: application/json" \
+  --data "$(generate_AAAA_post_data)"
+
+echo "Adding CAA record"
+curl --silent --output /dev/null "https://api.vultr.com/v2/domains/$SITE/records" \
+  -X POST \
+  -H "Authorization: Bearer $VULTR_API_KEY" \
+  -H "Content-Type: application/json" \
+  --data "$(generate_CAA1_post_data)"
+
+echo "Adding CAA iodef record"
+curl --silent --output /dev/null "https://api.vultr.com/v2/domains/$SITE/records" \
+  -X POST \
+  -H "Authorization: Bearer $VULTR_API_KEY" \
+  -H "Content-Type: application/json" \
+  --data "$(generate_CAA2_post_data)"
+
+if [ "x$RSA1" != "x" ]; then
+echo "Adding RSA SHA-1 SSHFP record"
+curl "https://api.vultr.com/v2/domains/$SITE/records" \
+  -X POST \
+  -H "Authorization: Bearer $VULTR_API_KEY" \
+  -H "Content-Type: application/json" \
+  --data "$(generate_SSHFP1_post_data)"
+fi
+
+if [ "x$RSA2" != "x" ]; then
+echo "Adding RSA SHA-256 SSHFP record"
+curl "https://api.vultr.com/v2/domains/$SITE/records" \
+  -X POST \
+  -H "Authorization: Bearer $VULTR_API_KEY" \
+  -H "Content-Type: application/json" \
+  --data "$(generate_SSHFP2_post_data)"
+fi
+
+if [ "x$DSA1" != "x" ]; then
+echo "Adding DSA SHA-1 SSHFP record"
+curl "https://api.vultr.com/v2/domains/$SITE/records" \
+  -X POST \
+  -H "Authorization: Bearer $VULTR_API_KEY" \
+  -H "Content-Type: application/json" \
+  --data "$(generate_SSHFP3_post_data)"
+fi
+
+if [ "x$DSA2" != "x" ]; then
+echo "Adding DSA SHA-256 SSHFP record"
+curl "https://api.vultr.com/v2/domains/$SITE/records" \
+  -X POST \
+  -H "Authorization: Bearer $VULTR_API_KEY" \
+  -H "Content-Type: application/json" \
+  --data "$(generate_SSHFP4_post_data)"
+fi
+
+if [ "x$ECDSA1" != "x" ]; then
+echo "Adding ECDSA SHA-1 SSHFP record"
+curl "https://api.vultr.com/v2/domains/$SITE/records" \
+  -X POST \
+  -H "Authorization: Bearer $VULTR_API_KEY" \
+  -H "Content-Type: application/json" \
+  --data "$(generate_SSHFP5_post_data)"
+fi
+
+if [ "x$ECDSA2" != "x" ]; then
+echo "Adding ECDSA SHA-256 SSHFP record"
+curl "https://api.vultr.com/v2/domains/$SITE/records" \
+  -X POST \
+  -H "Authorization: Bearer $VULTR_API_KEY" \
+  -H "Content-Type: application/json" \
+  --data "$(generate_SSHFP6_post_data)"
+fi
+
+if [ "x$ED255191" != "x" ]; then
+echo "Adding ED25519 SHA-1 SSHFP record"
+curl "https://api.vultr.com/v2/domains/$SITE/records" \
+  -X POST \
+  -H "Authorization: Bearer $VULTR_API_KEY" \
+  -H "Content-Type: application/json" \
+  --data "$(generate_SSHFP7_post_data)"
+fi
+
+if [ "x$ED255192" != "x" ]; then
+echo "Adding ED25519 SHA-256 SSHFP record"
+curl "https://api.vultr.com/v2/domains/$SITE/records" \
+  -X POST \
+  -H "Authorization: Bearer $VULTR_API_KEY" \
+  -H "Content-Type: application/json" \
+  --data "$(generate_SSHFP8_post_data)"
+fi
+
+if [ "x$ED4481" != "x" ]; then
+echo "Adding ED448 SHA-1 SSHFP record"
+curl "https://api.vultr.com/v2/domains/$SITE/records" \
+  -X POST \
+  -H "Authorization: Bearer $VULTR_API_KEY" \
+  -H "Content-Type: application/json" \
+  --data "$(generate_SSHFP9_post_data)"
+fi
+
+if [ "x$ED4482" != "x" ]; then
+echo "Adding ED448 SHA-256 SSHFP record"
+curl "https://api.vultr.com/v2/domains/$SITE/records" \
+  -X POST \
+  -H "Authorization: Bearer $VULTR_API_KEY" \
+  -H "Content-Type: application/json" \
+  --data "$(generate_SSHFP10_post_data)"
+fi
