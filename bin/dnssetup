@@ -37,6 +37,13 @@ do
   esac
 done
 
+#CURRENT_RECORDS=$(curl --silent "https://api.vultr.com/v2/domains/$SITE/records" -X GET -H "Authorization: Bearer $VULTR_API_KEY")
+#NS1_ID=$(echo $CURRENT_RECORDS | jq .records[0] | head -n 2 | tail -n 1 | cut -d \" -f 4)
+#NS2_ID=$(echo $CURRENT_RECORDS | jq .records[1] | head -n 2 | tail -n 1 | cut -d \" -f 4)
+#A_ID=$(echo $CURRENT_RECORDS | jq .records[2] | head -n 2 | tail -n 1 | cut -d \" -f 4)
+#CNAME_ID=$(echo $CURRENT_RECORDS | jq .records[3] | head -n 2 | tail -n 1 | cut -d \" -f 4)
+#MX_ID=$(echo $CURRENT_RECORDS | jq .records[4] | head -n 2 | tail -n 1 | cut -d \" -f 4)
+
 generate_create_post_data() {
   cat <<EOF
 {
@@ -47,13 +54,68 @@ generate_create_post_data() {
 EOF
 }
 
+generate_update_A_post_data() {
+  cat <<EOF
+{
+        "name": "",
+        "data": "$IPV4",
+        "ttl": $TTL,
+	"priority": 0
+}
+EOF
+}
+
+generate_update_CNAME_post_data() {
+  cat <<EOF
+{
+        "name": "*",
+        "data": "steamdeckinfo.com",
+        "ttl": $TTL,
+        "priority": 0
+}
+EOF
+}
+
+generate_update_MX_post_data() {
+  cat <<EOF
+{
+        "name": "",
+        "data": "$SITE",
+        "ttl": $TTL,
+        "priority": 10
+}
+EOF
+}
+
+generate_update_NS1_post_data() {
+  cat <<EOF
+{
+        "name": "",
+        "data": "ns1.vultr.com",
+        "ttl": $TTL,
+        "priority": 0
+}
+EOF
+}
+
+generate_update_NS2_post_data() {
+  cat <<EOF
+{
+        "name": "",
+        "data": "ns2.vultr.com",
+        "ttl": $TTL,
+        "priority": 0
+}
+EOF
+}
+
 generate_AAAA_post_data() {
   cat <<EOF
 {
 	"name": "",
 	"type": "AAAA",
 	"data": "$IPV6",
-	"ttl": 300,
+	"ttl": $TTL,
 	"priority": 0
 }
 EOF
@@ -65,7 +127,7 @@ generate_CAA1_post_data() {
         "name": "",
         "type": "CAA",
         "data": "0 issue \"$CERT_AUTHORITY\"",
-        "ttl": 300,
+        "ttl": $TTL,
         "priority": 0
 }
 EOF
@@ -77,7 +139,7 @@ generate_CAA2_post_data() {
         "name": "",
         "type": "CAA",
         "data": "0 iodef \"mailto:$CONTACT_EMAIL\"",
-        "ttl": 300,
+        "ttl": $TTL,
         "priority": 0
 }
 EOF
@@ -89,7 +151,7 @@ generate_SSHFP1_post_data() {
 	"name": "",
 	"type": "SSHFP",
 	"data": "$RSA1",
-	"ttl": 300,
+	"ttl": $TTL,
 	"priority": 0
 }
 EOF
@@ -101,7 +163,7 @@ generate_SSHFP2_post_data() {
         "name": "",
         "type": "SSHFP",
         "data": "$RSA2",
-        "ttl": 300,
+        "ttl": $TTL,
         "priority": 0
 }
 EOF
@@ -113,7 +175,7 @@ generate_SSHFP3_post_data() {
         "name": "",
         "type": "SSHFP",
         "data": "$DSA1",
-        "ttl": 300,
+        "ttl": $TTL,
         "priority": 0
 }
 EOF
@@ -125,7 +187,7 @@ generate_SSHFP4_post_data() {
         "name": "",
         "type": "SSHFP",
         "data": "$DSA2",
-        "ttl": 300,
+        "ttl": $TTL,
         "priority": 0
 }
 EOF
@@ -137,7 +199,7 @@ generate_SSHFP5_post_data() {
         "name": "",
         "type": "SSHFP",
         "data": "$ECDSA1",
-        "ttl": 300,
+        "ttl": $TTL,
         "priority": 0
 }
 EOF
@@ -149,7 +211,7 @@ generate_SSHFP6_post_data() {
         "name": "",
         "type": "SSHFP",
         "data": "$ECDSA2",
-        "ttl": 300,
+        "ttl": $TTL,
         "priority": 0
 }
 EOF
@@ -161,7 +223,7 @@ generate_SSHFP7_post_data() {
         "name": "",
         "type": "SSHFP",
         "data": "$ED255191",
-        "ttl": 300,
+        "ttl": $TTL,
         "priority": 0
 }
 EOF
@@ -173,7 +235,7 @@ generate_SSHFP8_post_data() {
         "name": "",
         "type": "SSHFP",
         "data": "$ED255192",
-        "ttl": 300,
+        "ttl": $TTL,
         "priority": 0
 }
 EOF
@@ -185,7 +247,7 @@ generate_SSHFP9_post_data() {
         "name": "",
         "type": "SSHFP",
         "data": "$ED255192",
-        "ttl": 300,
+        "ttl": $TTL,
         "priority": 0
 }
 EOF
@@ -197,7 +259,7 @@ generate_SSHFP10_post_data() {
         "name": "",
         "type": "SSHFP",
         "data": "$ED4481",
-        "ttl": 300,
+        "ttl": $TTL,
         "priority": 0
 }
 EOF
@@ -209,6 +271,48 @@ curl --silent --output /dev/null "https://api.vultr.com/v2/domains" \
   -H "Authorization: Bearer $VULTR_API_KEY" \
   -H "Content-Type: application/json" \
   --data "$(generate_create_post_data)"
+
+CURRENT_RECORDS=$(curl --silent "https://api.vultr.com/v2/domains/$SITE/records" -X GET -H "Authorization: Bearer $VULTR_API_KEY")
+NS1_ID=$(echo $CURRENT_RECORDS | jq .records[0] | head -n 2 | tail -n 1 | cut -d \" -f 4)
+NS2_ID=$(echo $CURRENT_RECORDS | jq .records[1] | head -n 2 | tail -n 1 | cut -d \" -f 4)
+A_ID=$(echo $CURRENT_RECORDS | jq .records[2] | head -n 2 | tail -n 1 | cut -d \" -f 4)
+CNAME_ID=$(echo $CURRENT_RECORDS | jq .records[3] | head -n 2 | tail -n 1 | cut -d \" -f 4)
+MX_ID=$(echo $CURRENT_RECORDS | jq .records[4] | head -n 2 | tail -n 1 | cut -d \" -f 4)
+
+echo "Updating NS1 record"
+curl --silent --output /dev/null  "https://api.vultr.com/v2/domains/$SITE/records/$NS1_ID" \
+  -X PATCH \
+  -H "Authorization: Bearer $VULTR_API_KEY" \
+  -H "Content-Type: application/json" \
+  --data "$(generate_update_NS1_post_data)"
+
+echo "Updating NS2 record"
+curl --silent --output /dev/null "https://api.vultr.com/v2/domains/$SITE/records/$NS2_ID" \
+  -X PATCH \
+  -H "Authorization: Bearer $VULTR_API_KEY" \
+  -H "Content-Type: application/json" \
+  --data "$(generate_update_NS2_post_data)"
+
+echo "Updating A record"
+curl --silent --output /dev/null "https://api.vultr.com/v2/domains/$SITE/records/$A_ID" \
+  -X PATCH \
+  -H "Authorization: Bearer $VULTR_API_KEY" \
+  -H "Content-Type: application/json" \
+  --data "$(generate_update_A_post_data)"
+
+echo "Updating CNAME record"
+curl --silent --output /dev/null "https://api.vultr.com/v2/domains/$SITE/records/$CNAME_ID" \
+  -X PATCH \
+  -H "Authorization: Bearer $VULTR_API_KEY" \
+  -H "Content-Type: application/json" \
+  --data "$(generate_update_CNAME_post_data)"
+
+echo "Updating MX record"
+curl --silent --output /dev/null "https://api.vultr.com/v2/domains/$SITE/records/$MX_ID" \
+  -X PATCH \
+  -H "Authorization: Bearer $VULTR_API_KEY" \
+  -H "Content-Type: application/json" \
+  --data "$(generate_update_MX_post_data)"
 
 echo "Adding AAAA record"
 curl --silent --output /dev/null "https://api.vultr.com/v2/domains/$SITE/records" \
@@ -233,7 +337,7 @@ curl --silent --output /dev/null "https://api.vultr.com/v2/domains/$SITE/records
 
 if [ "x$RSA1" != "x" ]; then
 echo "Adding RSA SHA-1 SSHFP record"
-curl "https://api.vultr.com/v2/domains/$SITE/records" \
+curl --silent --output /dev/null "https://api.vultr.com/v2/domains/$SITE/records" \
   -X POST \
   -H "Authorization: Bearer $VULTR_API_KEY" \
   -H "Content-Type: application/json" \
@@ -242,7 +346,7 @@ fi
 
 if [ "x$RSA2" != "x" ]; then
 echo "Adding RSA SHA-256 SSHFP record"
-curl "https://api.vultr.com/v2/domains/$SITE/records" \
+curl --silent --output /dev/null "https://api.vultr.com/v2/domains/$SITE/records" \
   -X POST \
   -H "Authorization: Bearer $VULTR_API_KEY" \
   -H "Content-Type: application/json" \
@@ -251,7 +355,7 @@ fi
 
 if [ "x$DSA1" != "x" ]; then
 echo "Adding DSA SHA-1 SSHFP record"
-curl "https://api.vultr.com/v2/domains/$SITE/records" \
+curl --silent --output /dev/null "https://api.vultr.com/v2/domains/$SITE/records" \
   -X POST \
   -H "Authorization: Bearer $VULTR_API_KEY" \
   -H "Content-Type: application/json" \
@@ -260,7 +364,7 @@ fi
 
 if [ "x$DSA2" != "x" ]; then
 echo "Adding DSA SHA-256 SSHFP record"
-curl "https://api.vultr.com/v2/domains/$SITE/records" \
+curl --silent --output /dev/null "https://api.vultr.com/v2/domains/$SITE/records" \
   -X POST \
   -H "Authorization: Bearer $VULTR_API_KEY" \
   -H "Content-Type: application/json" \
@@ -269,7 +373,7 @@ fi
 
 if [ "x$ECDSA1" != "x" ]; then
 echo "Adding ECDSA SHA-1 SSHFP record"
-curl "https://api.vultr.com/v2/domains/$SITE/records" \
+curl --silent --output /dev/null "https://api.vultr.com/v2/domains/$SITE/records" \
   -X POST \
   -H "Authorization: Bearer $VULTR_API_KEY" \
   -H "Content-Type: application/json" \
@@ -278,7 +382,7 @@ fi
 
 if [ "x$ECDSA2" != "x" ]; then
 echo "Adding ECDSA SHA-256 SSHFP record"
-curl "https://api.vultr.com/v2/domains/$SITE/records" \
+curl --silent --output /dev/null "https://api.vultr.com/v2/domains/$SITE/records" \
   -X POST \
   -H "Authorization: Bearer $VULTR_API_KEY" \
   -H "Content-Type: application/json" \
@@ -287,7 +391,7 @@ fi
 
 if [ "x$ED255191" != "x" ]; then
 echo "Adding ED25519 SHA-1 SSHFP record"
-curl "https://api.vultr.com/v2/domains/$SITE/records" \
+curl --silent --output /dev/null "https://api.vultr.com/v2/domains/$SITE/records" \
   -X POST \
   -H "Authorization: Bearer $VULTR_API_KEY" \
   -H "Content-Type: application/json" \
@@ -296,7 +400,7 @@ fi
 
 if [ "x$ED255192" != "x" ]; then
 echo "Adding ED25519 SHA-256 SSHFP record"
-curl "https://api.vultr.com/v2/domains/$SITE/records" \
+curl --silent --output /dev/null "https://api.vultr.com/v2/domains/$SITE/records" \
   -X POST \
   -H "Authorization: Bearer $VULTR_API_KEY" \
   -H "Content-Type: application/json" \
@@ -305,7 +409,7 @@ fi
 
 if [ "x$ED4481" != "x" ]; then
 echo "Adding ED448 SHA-1 SSHFP record"
-curl "https://api.vultr.com/v2/domains/$SITE/records" \
+curl --silent --output /dev/null "https://api.vultr.com/v2/domains/$SITE/records" \
   -X POST \
   -H "Authorization: Bearer $VULTR_API_KEY" \
   -H "Content-Type: application/json" \
@@ -314,7 +418,7 @@ fi
 
 if [ "x$ED4482" != "x" ]; then
 echo "Adding ED448 SHA-256 SSHFP record"
-curl "https://api.vultr.com/v2/domains/$SITE/records" \
+curl --silent --output /dev/null "https://api.vultr.com/v2/domains/$SITE/records" \
   -X POST \
   -H "Authorization: Bearer $VULTR_API_KEY" \
   -H "Content-Type: application/json" \
