@@ -1,5 +1,7 @@
 #!/bin/sh
 
+. /opt/ampolic/identity
+
 if [ -z ${1+x} ]; then
      printf "Please include a domain.\nUsage: newsite.sh [DOMAIN]\n" 1>&2
      exit 1
@@ -16,11 +18,11 @@ distinguished_name = req_distinguished_name\n\
 req_extensions = req_ext\n\
 prompt = no\n\
 [req_distinguished_name]\n\
-C   = US\n\
-ST  = Ohio\n\
-L   = Toledo\n\
-O   = Ampolic Digital Solutions LLC\n\
-OU  = Ampolic Digital Solutions LLC\n\
+C   = $COUNTRY\n\
+ST  = $STATE\n\
+L   = $LOCAL\n\
+O   = $COMPANY_NAME\n\
+OU  = $COMPANY_UNIT\n\
 CN  = $SITE\n\
 [req_ext]\n\
 subjectAltName = @alt_names\n\
