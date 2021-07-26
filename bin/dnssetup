@@ -69,7 +69,7 @@ generate_update_CNAME_post_data() {
   cat <<EOF
 {
         "name": "*",
-        "data": "steamdeckinfo.com",
+        "data": "$SITE",
         "ttl": $TTL,
         "priority": 0
 }
