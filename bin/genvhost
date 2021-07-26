@@ -24,7 +24,7 @@ server {
 	listen [::]:443 ssl;
 
 	#Files
-	root /var/www/html/$SITE;
+	root /opt/ampolic/www/$SITE;
 	index index.html;
 
 	#HTTP Headers
