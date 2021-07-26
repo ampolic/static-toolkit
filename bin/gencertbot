@@ -9,7 +9,7 @@ SITE=$1
 
 mkdir -p /opt/ampolic/ssl/$SITE
 
-echo "\
+echo -e "\
 domains = *.$SITE, $SITE\n\
 \n\
 csr = /opt/ampolic/ssl/$SITE/$SITE.first.csr\n\
