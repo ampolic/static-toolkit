@@ -38,9 +38,9 @@ openssl genrsa -out /opt/ampolic/ssl/$SITE/$SITE.second.key 4096 > /dev/null 2>&
 echo "Generating Private Key 3..."
 openssl genrsa -out /opt/ampolic/ssl/$SITE/$SITE.third.key 4096 > /dev/null 2>&1
 echo "Generating Certificate Signing Request 1..."
-openssl req -new -key /opt/ampolic/ssl/$SITE/$SITE.first.key -sha256 -out /opt/ampolic/ssl/$SITE/$SITE.first.csr -config /opt/ampolic/ssl/$SITE/openssl.cnf > /dev/null 2>&1
+openssl req -new -key /opt/ampolic/ssl/$SITE/$SITE.first.key -sha256 -out /opt/ampolic/ssl/$SITE/$SITE.first.csr -config /opt/ampolic/ssl/$SITE/$SITE.openssl.conf > /dev/null 2>&1
 echo "Generating Certificate Signing Request 2..."
-openssl req -new -key /opt/ampolic/ssl/$SITE/$SITE.second.key -sha256 -out /opt/ampolic/ssl/$SITE/$SITE.second.csr -config /opt/ampolic/ssl/$SITE/openssl.cnf > /dev/null 2>&1
+openssl req -new -key /opt/ampolic/ssl/$SITE/$SITE.second.key -sha256 -out /opt/ampolic/ssl/$SITE/$SITE.second.csr -config /opt/ampolic/ssl/$SITE/$SITE.openssl.conf > /dev/null 2>&1
 echo "Generating Certificate Signing Request 3..."
-openssl req -new -key /opt/ampolic/ssl/$SITE/$SITE.third.key -sha256 -out /opt/ampolic/ssl/$SITE/$SITE.third.csr -config /opt/ampolic/ssl/$SITE/openssl.cnf > /dev/null 2>&1
+openssl req -new -key /opt/ampolic/ssl/$SITE/$SITE.third.key -sha256 -out /opt/ampolic/ssl/$SITE/$SITE.third.csr -config /opt/ampolic/ssl/$SITE/$SITE.openssl.conf # > /dev/null 2>&1
 echo "Successfully generated 3 private keys in /opt/ampolic/ssl/$SITE/ and generated 3 signed certificate requests for $SITE and *.$SITE."
