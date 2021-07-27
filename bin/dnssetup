@@ -37,13 +37,6 @@ do
   esac
 done
 
-#CURRENT_RECORDS=$(curl --silent "https://api.vultr.com/v2/domains/$SITE/records" -X GET -H "Authorization: Bearer $VULTR_API_KEY")
-#NS1_ID=$(echo $CURRENT_RECORDS | jq .records[0] | head -n 2 | tail -n 1 | cut -d \" -f 4)
-#NS2_ID=$(echo $CURRENT_RECORDS | jq .records[1] | head -n 2 | tail -n 1 | cut -d \" -f 4)
-#A_ID=$(echo $CURRENT_RECORDS | jq .records[2] | head -n 2 | tail -n 1 | cut -d \" -f 4)
-#CNAME_ID=$(echo $CURRENT_RECORDS | jq .records[3] | head -n 2 | tail -n 1 | cut -d \" -f 4)
-#MX_ID=$(echo $CURRENT_RECORDS | jq .records[4] | head -n 2 | tail -n 1 | cut -d \" -f 4)
-
 generate_create_post_data() {
   cat <<EOF
 {
