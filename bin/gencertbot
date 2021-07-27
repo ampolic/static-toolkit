@@ -7,6 +7,15 @@ fi
 
 SITE=$1
 
+host $SITE 2>&1 > /dev/null
+    if [ $? -eq 0 ]
+    then
+        echo "$SITE validated."
+    else
+        echo "$h is not a valid domain."
+	exit 1
+    fi
+
 mkdir -p /opt/ampolic/ssl/$SITE
 
 echo -e "\
