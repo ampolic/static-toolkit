@@ -66,8 +66,8 @@ server {
 	ssl_prefer_server_ciphers on;
 	ssl_ecdh_curve secp384r1;
 	ssl_ciphers AES256+EECDH:AES256+EDH:!aNULL:!AES128;
-	ssl_certificate /etc/letsencrypt/live/$SITE/fullchain.pem;
-	ssl_certificate_key /etc/letsencrypt/live/$SITE/privkey.pem;
+	ssl_certificate /opt/ampolic/ssl/$SITE/fullchain.pem;
+	ssl_certificate_key /opt/ampolic/ssl/$SITE/$SITE.first.key;
 }
 
 #HTTP Redirect Server
@@ -75,7 +75,7 @@ server {
 	listen 80;
 	listen [::]:80;
 	server_name $SITE;
-	include badrequests.conf;
+	include /opt/ampolic/nginx/snippets/badrequests.conf;
 	return 301 https://\$server_name\$request_uri;
 }
 " > /opt/ampolic/nginx/sites/$SITE
